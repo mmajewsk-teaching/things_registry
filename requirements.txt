@@ -1,0 +1,9 @@
+torch
+torchvision
+Pillow
+numpy
+matplotlib
+transformers==4.45.2
+sqlalchemy
+IPython
+psycopg2-binary

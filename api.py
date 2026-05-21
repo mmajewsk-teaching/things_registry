@@ -1,0 +1,133 @@
+from fastapi import Request, FastAPI
+from pathlib import Path
+from sqlalchemy import create_engine
+from db.postgres import PGVectorCollection
+from pipelines.detection_pipeline import process_image
+from pipelines.ingestion_pipeline import run_ingestion_pipeline
+from pipelines.retrieval_pipeline import respond_to_query
+from pydantic import BaseModel
+import numpy as np
+#this value is to change is only for testing purposes, to see the effect of metadata update on retrieval results
+SAME_OBJECT_THRESHOLD = 0.70
+
+#class for receiving change location requests
+class ChangeLoc(BaseModel):
+    path: str
+    location: str
+#[Previous Instruction]
+### run database container
+    ### docker run -d \
+    #   --name pgvector \
+    #   -e POSTGRES_USER=myuser \
+    #   -e POSTGRES_PASSWORD=mypass \
+    #   -e POSTGRES_DB=mydb \
+    #   -p 5432:5432 \
+    #   pgvector/pgvector:pg16
+    #### conda to run project 
+    #### source ~/miniconda3/bin/activate
+    #### conda create -n ai python=3.10
+    #### pip install -r requirements.txt
+    #### python3 main.py
+#[End Previous instruction]
+#curl -X POST "http://127.0.0.1:8000/query/path?path=/home/alicja/CUDA/project/RepoCuda/DLWC_AA/test/mlotek_0.png"
+#[New Instruction]
+    #Step1: docker run --name pgvector -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=haslo -e POSTGRES_DB=testdb -p 5432:5432 pgvector/pgvector:pg16
+    #Step2: uvicorn api:app --reload
+
+    #Example calls
+    #TODO: !!!
+#[End New Instruction]
+
+app = FastAPI()
+
+@app.on_event("startup")
+def startup():
+    app.state.engine = create_engine("postgresql://postgres:haslo@localhost:5432/testdb")
+    app.state.things = PGVectorCollection(engine=app.state.engine,name="things2",dim=1024)
+
+    #Temporary
+    # initialize_vocabulary()
+    # app.state.things.clear()
+    # run_ingestion_pipeline(app.state.things,False)
+    #End Temporary
+
+    # engine = create_engine(
+    #     "postgresql://postgres:haslo@localhost:5432/testdb"
+    # )
+    #
+    # conn = engine.connect()
+    # print("Połączono!")
+    # conn.close()
+    #
+    # # engine = create_engine()
+    # app.state.things = create_things()
+
+@app.get("/things/count")
+def get_things_count(request: Request):
+    things = request.app.state.things
+    return {
+        "count": int(things.count()),
+        "collection": things.name
+    }
+
+@app.post("/things/clear")
+def clear_things(request: Request):
+    things = request.app.state.things
+    things.clear()
+    return {
+        "status": "ok",
+        "message": "things collection cleared"
+    }
+
+@app.post("/query/path")
+def query_from_path(path: str, request: Request):
+    things = request.app.state.things
+
+    crops, _ = process_image(Path(path))
+    qcrop = crops[0]
+
+    return respond_to_query(qcrop, things,top_k=5)
+
+
+#EXAMPLE CALL:
+#curl -X POST http://localhost:8000/query/changeloc -H 
+#"Content-Type: application/json" 
+#-d '{"path":"/home/alicja/CUDA/project/RepoCuda/DLWC_AA/test/mlotek_0.png","location":"garden"}'
+@app.post("/query/changeloc")
+def query_change_loc(payload: ChangeLoc, request: Request):
+    things = request.app.state.things
+
+    crops, _ = process_image(Path(payload.path))
+    qcrop = crops[0]
+
+    # First pass: find best match to decide whether to update metadata
+    initial_res = respond_to_query(qcrop, things, top_k=5)
+    top_score = initial_res['matches'][0]['similarity']
+    original_metadata = initial_res['matches'][0]['metadata']
+    updated = False
+    if top_score >= SAME_OBJECT_THRESHOLD:
+        top_id = initial_res['matches'][0]['id']
+        original_metadata['location'] = payload.location
+        things.update_metadata(ids=[top_id], metadatas=[original_metadata])
+        updated = True
+
+    # Second pass: refresh results after possible metadata update
+    final_res = respond_to_query(qcrop, things, top_k=5)
+    if updated:
+        final_res.setdefault('message', '')
+        final_res['message'] += f" Location updated to '{payload.location}'."
+
+    return final_res
+
+@app.post("/things/initialize")
+def initialize_things(request: Request):
+    things = request.app.state.things
+
+    result = run_ingestion_pipeline(
+        things=things,
+        plotResults=False
+    )
+
+    return {
+        "status": "ok"
+    }
