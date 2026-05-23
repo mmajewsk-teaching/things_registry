@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css">
+    <title>Things Registry</title>
+</head>
+<body>
+
+    <h1>Things Registry</h1>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Initialize Things</h2>
+            <form data-endpoint="/things/initialize" data-method="POST">
+                <button type="submit">Initialize</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Get Things Count</h2>
+            <form data-endpoint="/things/count" data-method="GET">
+                <button type="submit">Get Count</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Clear Things</h2>
+            <form data-endpoint="/things/clear" data-method="POST">
+                <button type="submit">Clear</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Query Path</h2>
+            <form data-endpoint="/query/path" data-method="POST">
+                <label for="path">Image Path</label>
+                <input name="path" placeholder="./DLWC_AA/test/mlotek_0.png" required />
+                <button type="submit">Query</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Change Location</h2>
+            <form data-endpoint="/query/changeloc" data-method="POST">
+                <label for="path">Image Path</label>
+                <input name="path" placeholder="./DLWC_AA/test/mlotek_0.png" required/>
+                <br /><br />
+                <label for="path">New location</label>
+                <input name="location" placeholder="garden" required/>
+                <br /><br />
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <hr />
+
+    <h2>Response</h2>
+    <pre id="output"></pre>
+
+    <script src="script.js"></script>
+</body>
+</html>

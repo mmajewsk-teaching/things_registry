@@ -38,57 +38,58 @@ CATEGORY_CONFIDENCE_THRESHOLD = 0.22  # below this -> 'unknown'
 #     OPEN_VOCAB_MATRIX = embed_clip_text_batch(OPEN_VOCAB_PROMPTS)
 #     print(f"Kształt macierzy słownika: {OPEN_VOCAB_MATRIX.shape}")
 
-def initialize_vocabulary_from_json(vocab_collection):
-    """One-time initialization:JSON → Postgres vocabulary table"""
 
-    ALL_VOCAB_FILE = f'./DLWC_AA/all_vocab.json'
+# def initialize_vocabulary_from_json(vocab_collection):
+#     """One-time initialization:JSON → Postgres vocabulary table"""
 
-    try:
-        with open(ALL_VOCAB_FILE, 'r', encoding='utf-8') as f:
-            labels = json.load(f)
+#     ALL_VOCAB_FILE = f'./DLWC_AA/all_vocab.json'
 
-        print(f"Loaded {len(labels)} labels from JSON.")
+#     try:
+#         with open(ALL_VOCAB_FILE, 'r', encoding='utf-8') as f:
+#             labels = json.load(f)
 
-    except FileNotFoundError:
-        print(f"Error: Could not find {ALL_VOCAB_FILE}")
-        labels = ['unknown object']
+#         print(f"Loaded {len(labels)} labels from JSON.")
 
-    print("Generating embeddings...")
+#     except FileNotFoundError:
+#         print(f"Error: Could not find {ALL_VOCAB_FILE}")
+#         labels = ['unknown object']
 
-    prompts = [f"a photo of a {x}" for x in labels]
-    embeddings = embed_clip_text_batch(prompts)
+#     print("Generating embeddings...")
 
-    print("Saving vocabulary to database...")
+#     prompts = [f"a photo of a {x}" for x in labels]
+#     embeddings = embed_clip_text_batch(prompts)
 
-    vocab_collection.add_many(labels, embeddings)
+#     print("Saving vocabulary to database...")
 
-    print("Initialization of vocabulary complete")
+#     vocab_collection.add_many(labels, embeddings)
+
+#     print("Initialization of vocabulary complete")
 
 
-def load_vocab_cache_from_db(vocab_collection):
-    """Load vocabulary from database"""
-    rows = vocab_collection.get_all()
-    # print("DEBUG ROW TYPE:", type(rows[0][1]))
-    # print("DEBUG SAMPLE VALUE:", rows[0][1])
+# def load_vocab_cache_from_db(vocab_collection):
+#     """Load vocabulary from database"""
+#     rows = vocab_collection.get_all()
+#     # print("DEBUG ROW TYPE:", type(rows[0][1]))
+#     # print("DEBUG SAMPLE VALUE:", rows[0][1])
 
-    labels = [r[0] for r in rows]
+#     labels = [r[0] for r in rows]
 
-    matrix = np.array([
-        # np.array(r[1], dtype=np.float32)
-        np.array(ast.literal_eval(r[1]), dtype=np.float32)
-        for r in rows
-    ])
+#     matrix = np.array([
+#         # np.array(r[1], dtype=np.float32)
+#         np.array(ast.literal_eval(r[1]), dtype=np.float32)
+#         for r in rows
+#     ])
 
-    prompts = [
-        f"a photo of a {x}"
-        for x in labels
-    ]
+#     prompts = [
+#         f"a photo of a {x}"
+#         for x in labels
+#     ]
 
-    return {
-        "labels": labels,
-        "matrix": matrix,
-        "prompts": prompts,
-    }
+#     return {
+#         "labels": labels,
+#         "matrix": matrix,
+#         "prompts": prompts,
+#     }
 
 #VERSION BEFORE INTRODUCTION OF DB
 # def classify_open_vocab(crop_emb_clip: np.ndarray, top_n: int = 5):
@@ -101,17 +102,17 @@ def load_vocab_cache_from_db(vocab_collection):
 #     label = best_name if best_sim >= CATEGORY_CONFIDENCE_THRESHOLD else 'unknown'
 #     return label, best_sim, topn
 
-def classify_open_vocab(crop_emb_clip: np.ndarray,vocab_cache,top_n: int = 5):
-    matrix = vocab_cache["matrix"]
-    labels = vocab_cache["labels"]
+# def classify_open_vocab(crop_emb_clip: np.ndarray,vocab_cache,top_n: int = 5):
+#     matrix = vocab_cache["matrix"]
+#     labels = vocab_cache["labels"]
 
-    sims = matrix @ crop_emb_clip
-    order = np.argsort(-sims)
-    topn = [(labels[i], float(sims[i])) for i in order[:top_n]]
-    best_name, best_sim = topn[0]
-    label = (best_name if best_sim >= CATEGORY_CONFIDENCE_THRESHOLD else "unknown")
+#     sims = matrix @ crop_emb_clip
+#     order = np.argsort(-sims)
+#     topn = [(labels[i], float(sims[i])) for i in order[:top_n]]
+#     best_name, best_sim = topn[0]
+#     label = (best_name if best_sim >= CATEGORY_CONFIDENCE_THRESHOLD else "unknown")
 
-    return label, best_sim, topn
+#     return label, best_sim, topn
 
 #VERSION BEFORE INTRODUCTION OF DB
 # def extend_vocabulary(new_label: str):
@@ -136,34 +137,34 @@ def classify_open_vocab(crop_emb_clip: np.ndarray,vocab_cache,top_n: int = 5):
 #     OPEN_VOCAB_MATRIX = np.vstack([OPEN_VOCAB_MATRIX, new_emb])
 #     print("Vocabulary updated successfully. The system will now recognize this item.")
 
-def extend_vocabulary(new_label: str,vocab_collection,vocab_cache):
-    """Add new label to vocabulary DB and update runtime cache."""
+# def extend_vocabulary(new_label: str,vocab_collection,vocab_cache):
+#     """Add new label to vocabulary DB and update runtime cache."""
 
-    if new_label is None: return
+#     if new_label is None: return
 
-    labels = vocab_cache["labels"]
-    matrix = vocab_cache["matrix"]
-    prompts = vocab_cache["prompts"]
+#     labels = vocab_cache["labels"]
+#     matrix = vocab_cache["matrix"]
+#     prompts = vocab_cache["prompts"]
 
-    if new_label in labels:
-        print(f"Label '{new_label}' already exists.")
-        return
+#     if new_label in labels:
+#         print(f"Label '{new_label}' already exists.")
+#         return
 
-    print(f"Adding new label: '{new_label}'")
+#     print(f"Adding new label: '{new_label}'")
 
-    # Generate CLIP text embedding
-    prompt = f"a photo of a {new_label}"
+#     # Generate CLIP text embedding
+#     prompt = f"a photo of a {new_label}"
 
-    new_emb = embed_clip_text(prompt)
+#     new_emb = embed_clip_text(prompt)
 
-    # Persist to DB
-    vocab_collection.add(label=new_label,embedding=new_emb)
+#     # Persist to DB
+#     vocab_collection.add(label=new_label,embedding=new_emb)
 
-    # Update runtime cache
-    labels.append(new_label)
+#     # Update runtime cache
+#     labels.append(new_label)
 
-    prompts.append(prompt)
+#     prompts.append(prompt)
 
-    vocab_cache["matrix"] = np.vstack([matrix,new_emb])
+#     vocab_cache["matrix"] = np.vstack([matrix,new_emb])
 
-    print("Vocabulary updated successfully.")
+#     print("Vocabulary updated successfully.")

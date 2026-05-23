@@ -6,7 +6,8 @@ from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
 from pipelines.retrieval_pipeline import respond_to_query
 from pydantic import BaseModel
-import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
+# import numpy as np
 #this value is to change is only for testing purposes, to see the effect of metadata update on retrieval results
 SAME_OBJECT_THRESHOLD = 0.70
 
@@ -14,6 +15,11 @@ SAME_OBJECT_THRESHOLD = 0.70
 class ChangeLoc(BaseModel):
     path: str
     location: str
+
+#Class for receiving query requests
+class QueryRequest(BaseModel):
+    path: str
+
 #[Previous Instruction]
 ### run database container
     ### docker run -d \
@@ -29,38 +35,30 @@ class ChangeLoc(BaseModel):
     #### pip install -r requirements.txt
     #### python3 main.py
 #[End Previous instruction]
-#curl -X POST "http://127.0.0.1:8000/query/path?path=/home/alicja/CUDA/project/RepoCuda/DLWC_AA/test/mlotek_0.png"
-#[New Instruction]
-    #Step1: docker run --name pgvector -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=haslo -e POSTGRES_DB=testdb -p 5432:5432 pgvector/pgvector:pg16
-    #Step2: uvicorn api:app --reload
 
-    #Example calls
-    #TODO: !!!
+#[New Instruction]
+    #Step0: [OPTIONAL] run conda
+    #Step1: pip install -r requirements.txt
+    #Step2: docker run --name pgvector -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=haslo -e POSTGRES_DB=testdb -p 5432:5432 pgvector/pgvector:pg16
+    #Step3: uvicorn api:app --reload
+    #Step4: run index.html
+
 #[End New Instruction]
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5500","http://127.0.0.1:5500"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def startup():
     app.state.engine = create_engine("postgresql://postgres:haslo@localhost:5432/testdb")
     app.state.things = PGVectorCollection(engine=app.state.engine,name="things2",dim=1024)
 
-    #Temporary
-    # initialize_vocabulary()
-    # app.state.things.clear()
-    # run_ingestion_pipeline(app.state.things,False)
-    #End Temporary
-
-    # engine = create_engine(
-    #     "postgresql://postgres:haslo@localhost:5432/testdb"
-    # )
-    #
-    # conn = engine.connect()
-    # print("Połączono!")
-    # conn.close()
-    #
-    # # engine = create_engine()
-    # app.state.things = create_things()
 
 @app.get("/things/count")
 def get_things_count(request: Request):
@@ -79,14 +77,23 @@ def clear_things(request: Request):
         "message": "things collection cleared"
     }
 
+# @app.post("/query/path")
+# def query_from_path(path: str, request: Request):
+#     things = request.app.state.things
+
+#     crops, _ = process_image(Path(path))
+#     qcrop = crops[0]
+
+#     return respond_to_query(qcrop, things,top_k=5)
+
 @app.post("/query/path")
-def query_from_path(path: str, request: Request):
+def query_from_path(req: QueryRequest, request: Request):
     things = request.app.state.things
 
-    crops, _ = process_image(Path(path))
+    crops, _ = process_image(Path(req.path))
     qcrop = crops[0]
 
-    return respond_to_query(qcrop, things,top_k=5)
+    return respond_to_query(qcrop, things, top_k=5)
 
 
 #EXAMPLE CALL:
