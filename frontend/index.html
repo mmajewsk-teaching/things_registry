@@ -13,28 +13,28 @@
     <div class="grid">
         <div class="card">
             <h2>Initialize Things</h2>
-            <form data-endpoint="/things/initialize" data-method="POST">
+            <form data-endpoint="/things/initialize" data-method="POST" data-loading-text="Scanning photos and building registry…">
                 <button type="submit">Initialize</button>
             </form>
         </div>
 
         <div class="card">
             <h2>Get Things Count</h2>
-            <form data-endpoint="/things/count" data-method="GET">
+            <form data-endpoint="/things/count" data-method="GET" data-loading-text="Fetching count…">
                 <button type="submit">Get Count</button>
             </form>
         </div>
 
         <div class="card">
             <h2>Clear Things</h2>
-            <form data-endpoint="/things/clear" data-method="POST">
+            <form data-endpoint="/things/clear" data-method="POST" data-loading-text="Clearing registry…">
                 <button type="submit">Clear</button>
             </form>
         </div>
 
         <div class="card">
             <h2>Query Path</h2>
-            <form data-endpoint="/query/path" data-method="POST">
+            <form data-endpoint="/query/path" data-method="POST" data-loading-text="Analysing image…">
                 <label for="file">Image</label>
                 <input type="file" name="file" accept="image/*" required />
                 <button type="submit">Query</button>
@@ -43,7 +43,7 @@
 
         <div class="card">
             <h2>Change Location</h2>
-            <form data-endpoint="/query/changeloc" data-method="POST">
+            <form data-endpoint="/query/changeloc" data-method="POST" data-loading-text="Analysing image and updating location…">
                 <label for="file">Image</label>
                 <input type="file" name="file" accept="image/*" required/>
                 <br /><br />

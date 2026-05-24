@@ -2,6 +2,7 @@ const API_BASE = "http://localhost:8000";
 
 const output       = document.getElementById("output");
 const spinnerWrap  = document.getElementById("spinner-wrap");
+const spinnerText  = spinnerWrap.querySelector("p");
 const imagesSection = document.getElementById("images-section");
 const queryImg     = document.getElementById("query-img");
 const matchesGrid  = document.getElementById("matches-grid");
@@ -10,7 +11,8 @@ function show(data) {
     output.textContent = JSON.stringify(data, null, 2);
 }
 
-function showSpinner() {
+function showSpinner(text = "Loading…") {
+    spinnerText.textContent = text;
     spinnerWrap.classList.remove("hidden");
     imagesSection.classList.add("hidden");
     output.textContent = "";
@@ -83,7 +85,7 @@ document.addEventListener("submit", async (e) => {
         }
     }
 
-    showSpinner();
+    showSpinner(form.dataset.loadingText);
 
     try {
         const res  = await fetch(endpoint, options);
