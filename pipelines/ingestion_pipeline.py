@@ -1,9 +1,8 @@
-from PIL import Image,ImageDraw
-from matplotlib import pyplot as plt
+from PIL import Image, ImageDraw
 from pathlib import Path
 from pipelines.detection_pipeline import process_image
-from IPython.display import clear_output
 from services.crop_service import register_crop
+import time
 
 PHOTOS_FOLDER = './DLWC_AA/things_photos'
 
@@ -32,39 +31,34 @@ def draw_detections(img: Image.Image, crops):
     return out
 
 
-annotated = {}
-def run_ingestion_pipeline(things,plotResults):
-    print("Starting ingestion pipeline...")
+def run_ingestion_pipeline(things, plotResults=False) -> dict:
+    t_start = time.time()
 
-    image_paths = sorted(p for p in Path(PHOTOS_FOLDER).iterdir() if p.suffix.lower() in {'.jpg', '.jpeg', '.png'})
-    print(f'Found {len(image_paths)} photos.')
+    things.clear()
+
+    image_paths = sorted(
+        p for p in Path(PHOTOS_FOLDER).iterdir()
+        if p.suffix.lower() in {'.jpg', '.jpeg', '.png'}
+    )
+
+    total_crops = 0
+    fallbacks = 0
 
     for path in image_paths:
         crops, img = process_image(path)
-
         default_loc = location_for(path)
 
         for c in crops:
-            clear_output(wait=True)
+            if c.detector_label == 'whole_image_fallback':
+                fallbacks += 1
+            register_crop(c, location=default_loc, things=things)
+            total_crops += 1
 
-            if plotResults:
-                plt.figure(figsize=(5, 5))
-                plt.imshow(c.image)
-                plt.title(f"Plik: {path.name} | Obiekt nr: {c.crop_idx}")
-                plt.axis('off')
-                plt.show()
+    elapsed = round(time.time() - t_start, 1)
 
-            print("-" * 50)
-            print(f"Default localization '{default_loc}'")
-
-
-            final_loc = default_loc
-
-            cid = register_crop(c, location=final_loc,things=things)
-
-
-
-            print("\n=== Save with success ===")
-            print(f"Location: {final_loc}")
-            print(f"ID in wektor database: {cid[:8]}...")
-        annotated[path] = draw_detections(img, crops)
+    return {
+        "photos_scanned": len(image_paths),
+        "objects_registered": total_crops,
+        "fallbacks": fallbacks,
+        "elapsed_seconds": elapsed,
+    }

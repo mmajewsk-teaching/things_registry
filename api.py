@@ -146,11 +146,9 @@ async def query_change_loc(request: Request, file: UploadFile = File(...), locat
 def initialize_things(request: Request):
     things = request.app.state.things
 
-    result = run_ingestion_pipeline(
-        things=things,
-        plotResults=False
-    )
+    result = run_ingestion_pipeline(things=things)
 
     return {
-        "status": "ok"
+        "status": "ok",
+        **result,
     }
