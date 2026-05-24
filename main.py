@@ -1,6 +1,5 @@
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
 from db.postgres import create_things
-from services.vocabulary_service import initialize_vocabulary
 
 # def list_things(things) -> list[dict]:
 #     """List everything currently stored."""
