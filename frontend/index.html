@@ -35,8 +35,8 @@
         <div class="card">
             <h2>Query Path</h2>
             <form data-endpoint="/query/path" data-method="POST">
-                <label for="path">Image Path</label>
-                <input name="path" placeholder="./DLWC_AA/test/mlotek_0.png" required />
+                <label for="file">Image</label>
+                <input type="file" name="file" accept="image/*" required />
                 <button type="submit">Query</button>
             </form>
         </div>
@@ -44,10 +44,10 @@
         <div class="card">
             <h2>Change Location</h2>
             <form data-endpoint="/query/changeloc" data-method="POST">
-                <label for="path">Image Path</label>
-                <input name="path" placeholder="./DLWC_AA/test/mlotek_0.png" required/>
+                <label for="file">Image</label>
+                <input type="file" name="file" accept="image/*" required/>
                 <br /><br />
-                <label for="path">New location</label>
+                <label for="location">New location</label>
                 <input name="location" placeholder="garden" required/>
                 <br /><br />
                 <button type="submit">Send</button>
@@ -56,6 +56,18 @@
     </div>
 
     <hr />
+
+    <div id="spinner-wrap" class="spinner-wrap hidden">
+        <div class="spinner"></div>
+        <p>Analysing image…</p>
+    </div>
+
+    <div id="images-section" class="hidden">
+        <h3>Query image</h3>
+        <img id="query-img" class="query-img" alt="uploaded image" />
+        <h3>Matches</h3>
+        <div id="matches-grid" class="matches-grid"></div>
+    </div>
 
     <h2>Response</h2>
     <pre id="output"></pre>

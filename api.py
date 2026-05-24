@@ -1,5 +1,7 @@
-from fastapi import Request, FastAPI
+from fastapi import Request, FastAPI, UploadFile, File, Form
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import tempfile, shutil
 from sqlalchemy import create_engine
 from db.postgres import PGVectorCollection
 from pipelines.detection_pipeline import process_image
@@ -46,6 +48,7 @@ class QueryRequest(BaseModel):
 #[End New Instruction]
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="."), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5500","http://127.0.0.1:5500"],
@@ -87,13 +90,19 @@ def clear_things(request: Request):
 #     return respond_to_query(qcrop, things,top_k=5)
 
 @app.post("/query/path")
-def query_from_path(req: QueryRequest, request: Request):
+async def query_from_path(request: Request, file: UploadFile = File(...)):
     things = request.app.state.things
 
-    crops, _ = process_image(Path(req.path))
-    qcrop = crops[0]
-
-    return respond_to_query(qcrop, things, top_k=5)
+    suffix = Path(file.filename).suffix or ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = Path(tmp.name)
+    try:
+        crops, _ = process_image(tmp_path)
+        qcrop = crops[0]
+        return respond_to_query(qcrop, things, top_k=5)
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 
 #EXAMPLE CALL:
@@ -101,30 +110,37 @@ def query_from_path(req: QueryRequest, request: Request):
 #"Content-Type: application/json" 
 #-d '{"path":"/home/alicja/CUDA/project/RepoCuda/DLWC_AA/test/mlotek_0.png","location":"garden"}'
 @app.post("/query/changeloc")
-def query_change_loc(payload: ChangeLoc, request: Request):
+async def query_change_loc(request: Request, file: UploadFile = File(...), location: str = Form(...)):
     things = request.app.state.things
 
-    crops, _ = process_image(Path(payload.path))
-    qcrop = crops[0]
+    suffix = Path(file.filename).suffix or ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = Path(tmp.name)
+    try:
+        crops, _ = process_image(tmp_path)
+        qcrop = crops[0]
 
-    # First pass: find best match to decide whether to update metadata
-    initial_res = respond_to_query(qcrop, things, top_k=5)
-    top_score = initial_res['matches'][0]['similarity']
-    original_metadata = initial_res['matches'][0]['metadata']
-    updated = False
-    if top_score >= SAME_OBJECT_THRESHOLD:
-        top_id = initial_res['matches'][0]['id']
-        original_metadata['location'] = payload.location
-        things.update_metadata(ids=[top_id], metadatas=[original_metadata])
-        updated = True
+        # First pass: find best match to decide whether to update metadata
+        initial_res = respond_to_query(qcrop, things, top_k=5)
+        top_score = initial_res['matches'][0]['similarity']
+        original_metadata = initial_res['matches'][0]['metadata']
+        updated = False
+        if top_score >= SAME_OBJECT_THRESHOLD:
+            top_id = initial_res['matches'][0]['id']
+            original_metadata['location'] = location
+            things.update_metadata(ids=[top_id], metadatas=[original_metadata])
+            updated = True
 
-    # Second pass: refresh results after possible metadata update
-    final_res = respond_to_query(qcrop, things, top_k=5)
-    if updated:
-        final_res.setdefault('message', '')
-        final_res['message'] += f" Location updated to '{payload.location}'."
+        # Second pass: refresh results after possible metadata update
+        final_res = respond_to_query(qcrop, things, top_k=5)
+        if updated:
+            final_res.setdefault('message', '')
+            final_res['message'] += f" Location updated to '{location}'."
 
-    return final_res
+        return final_res
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 @app.post("/things/initialize")
 def initialize_things(request: Request):

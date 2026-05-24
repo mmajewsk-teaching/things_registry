@@ -1,10 +1,21 @@
-## Setup Steps
+## Things Registry
+
+Visual object registry backed by PostgreSQL + pgvector. Upload a photo of an object to find matches, check locations, or update where something lives.
+
+---
+
+## Setup
 
 ```bash
-# Step 0: [OPTIONAL] run conda
-# Step 1: pip install -r requirements.txt
+# 0. (Optional) Create and activate the conda environment
+source ~/miniconda3/bin/activate
+conda create -n ai python=3.10 -y
+conda activate ai
 
-# Step 2: Run PostgreSQL with pgvector
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Start PostgreSQL with pgvector
 docker run --name pgvector \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=haslo \
@@ -12,8 +23,39 @@ docker run --name pgvector \
   -p 5432:5432 \
   pgvector/pgvector:pg16
 
-# Step 3: Start backend
+# If the container already exists (stopped):
+docker start pgvector
+
+# 3. Start the backend
 uvicorn api:app --reload
 
-# Step 4: Start frontend
-# Open index.html in your browser
+# 4. Serve the frontend on port 5500 (required - CORS is locked to this port)
+cd frontend && python -m http.server 5500
+```
+
+Open **http://localhost:5500** in your browser.
+
+> **Note:** Do not open `index.html` directly as `file://` - API calls will be blocked by CORS.
+
+---
+
+## Usage
+
+| Card | What it does |
+|---|---|
+| **Initialize Things** | Runs the ingestion pipeline - embeds all images in `DLWC_AA/things_photos/` and stores them in the DB |
+| **Get Things Count** | Shows how many embeddings are stored |
+| **Clear Things** | Deletes all embeddings from the DB |
+| **Query Path** | Upload an image → finds the top 5 visually similar objects and their locations |
+| **Change Location** | Upload an image + type a new location → updates the location of the best matching object |
+
+Results are shown as image cards (with similarity % and location) plus raw JSON below.
+
+---
+
+## Stack
+
+- **FastAPI** - REST API + static file serving
+- **pgvector / PostgreSQL** - vector similarity search
+- **DINOv2** - image embeddings (runs on CPU by default)
+- **Vanilla JS + CSS** - frontend, no build step
