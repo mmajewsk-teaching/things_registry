@@ -60,7 +60,7 @@ def respond_to_query(crop: Crop, things,top_k: int = 5) -> dict:
     else:
         response['tier'] = 'unknown'
         response['message'] = (
-            f'I do not recognize this object (best similarity only {top_sim:.3f} to {top_cat}). '
+            f'I do not recognize this object (best similarity only {top_sim:.3f}). '
             f'Top open-vocab guesses: '
             # + ', '.join(f'{n} ({s:.2f})' for n, s in crop.category_topk[:3])
             + '. Want to register it?'
