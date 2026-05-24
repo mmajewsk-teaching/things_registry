@@ -94,6 +94,56 @@ pre {
     to { transform: rotate(360deg); }
 }
 
+/* ── Result panel & tabs ── */
+.result-panel {
+    margin-top: 24px;
+    background: #1e293b;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    overflow: hidden;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #334155;
+}
+
+.tab-btn {
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: 12px 24px;
+    margin: 0;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+    background: transparent;
+    color: #e2e8f0;
+}
+
+.tab-btn.active {
+    color: #38bdf8;
+    border-bottom-color: #38bdf8;
+    background: transparent;
+}
+
+.tab-content {
+    padding: 20px;
+}
+
+.tab-content pre {
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
 /* ── Image results ── */
 .query-img {
     max-width: 240px;

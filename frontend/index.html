@@ -62,15 +62,25 @@
         <p>Analysing image…</p>
     </div>
 
-    <div id="images-section" class="hidden">
-        <h3>Query image</h3>
-        <img id="query-img" class="query-img" alt="uploaded image" />
-        <h3>Matches</h3>
-        <div id="matches-grid" class="matches-grid"></div>
-    </div>
+    <div id="result-panel" class="result-panel hidden">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="images">Images</button>
+            <button class="tab-btn" data-tab="json">JSON</button>
+        </div>
 
-    <h2>Response</h2>
-    <pre id="output"></pre>
+        <div class="tab-content" id="tab-images">
+            <div id="images-section">
+                <h3>Query image</h3>
+                <img id="query-img" class="query-img" alt="uploaded image" />
+                <h3>Matches</h3>
+                <div id="matches-grid" class="matches-grid"></div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-json">
+            <pre id="output"></pre>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
