@@ -5,7 +5,7 @@ from sqlalchemy import text
 DATABASE_URL = "postgresql://postgres:haslo@localhost:5432/testdb"
 
 class PGVectorCollection:
-    def __init__(self, engine, name, dim=1024):
+    def __init__(self, engine, name, dim=384):
         self.engine = engine
         self.name = name
         self.dim = dim

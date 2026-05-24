@@ -60,7 +60,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     app.state.engine = create_engine("postgresql://postgres:haslo@localhost:5432/testdb")
-    app.state.things = PGVectorCollection(engine=app.state.engine,name="things2",dim=1024)
+    app.state.things = PGVectorCollection(engine=app.state.engine,name="things2",dim=384)
 
 
 @app.get("/things/count")
