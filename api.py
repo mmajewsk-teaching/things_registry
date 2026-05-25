@@ -2,11 +2,13 @@ from fastapi import Request, FastAPI, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import tempfile, shutil
+from datetime import datetime
 from sqlalchemy import create_engine
 from db.postgres import PGVectorCollection
 from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
 from pipelines.retrieval_pipeline import respond_to_query
+from services.crop_service import register_crop
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 # import numpy as np
@@ -88,6 +90,49 @@ def clear_things(request: Request):
 #     qcrop = crops[0]
 
 #     return respond_to_query(qcrop, things,top_k=5)
+
+@app.post("/add/path")
+async def add_thing(request: Request, file: UploadFile = File(...), location: str = Form(...)):
+    things = request.app.state.things
+
+    # Create uploads directory if it doesn't exist
+    uploads_dir = Path("./uploads")
+    uploads_dir.mkdir(exist_ok=True)
+
+    # Generate permanent file path
+    suffix = Path(file.filename).suffix or ".png"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{timestamp}_{file.filename}"
+    file_path = uploads_dir / filename
+
+    # Save file permanently
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    try:
+        crops, _ = process_image(file_path)
+        qcrop = crops[0]
+
+        # First pass: find best match to decide whether to update metadata
+        initial_res = respond_to_query(qcrop, things, top_k=5)
+        top_score = initial_res['matches'][0]['similarity']
+       
+        if top_score >= SAME_OBJECT_THRESHOLD:
+            return {
+            "status": "ok",
+            "message": "Object already exists with similar location. Do not add duplicate."
+            }
+        for c in crops:
+            register_crop(c, location=location, things=things)
+
+        return {
+            "status": "ok",
+            "message": "Object added successfully.",
+            "file_path": str(file_path)
+            }
+    except Exception as e:
+        file_path.unlink(missing_ok=True)
+        raise
 
 @app.post("/query/path")
 async def query_from_path(request: Request, file: UploadFile = File(...)):

@@ -42,6 +42,19 @@
         </div>
 
         <div class="card">
+            <h2>Add Path</h2>
+            <form data-endpoint="/add/path" data-method="POST" data-loading-text="Uploading and registering image…">
+                <label for="file">Image</label>
+                <input type="file" name="file" accept="image/*" required />
+                <br /><br />
+                <label for="location">Location</label>
+                <input name="location" placeholder="garden" required />
+                <br /><br />
+                <button type="submit">Add</button>
+            </form>
+        </div>
+
+        <div class="card">
             <h2>Change Location</h2>
             <form data-endpoint="/query/changeloc" data-method="POST" data-loading-text="Analysing image and updating location…">
                 <label for="file">Image</label>
