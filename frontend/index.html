@@ -40,7 +40,15 @@
                 <button type="submit">Query</button>
             </form>
         </div>
+        <div class="card">
+    <h2>Query by Location</h2>
 
+    <form data-endpoint="/query/getperlocation"  data-method="post" data-loading-text="Fetching things at location…">
+        <label for="location">Location</label>
+        <input name="location" placeholder="garden" required/>
+        <button type="submit">Query</button>
+    </form>
+</div>
         <div class="card">
             <h2>Add Path</h2>
             <form data-endpoint="/add/path" data-method="POST" data-loading-text="Uploading and registering image…">
@@ -83,7 +91,9 @@
 
         <div class="tab-content" id="tab-images">
             <div id="images-section">
+                <div id="query-image-block">
                 <h3>Query image</h3>
+                </div>
                 <img id="query-img" class="query-img" alt="uploaded image" />
                 <h3>Matches</h3>
                 <div id="matches-grid" class="matches-grid"></div>

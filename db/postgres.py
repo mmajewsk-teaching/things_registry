@@ -1,6 +1,7 @@
 
 import json
 from sqlalchemy import text
+import uuid
 
 DATABASE_URL = "postgresql://postgres:haslo@localhost:5432/testdb"
 
@@ -20,7 +21,24 @@ class PGVectorCollection:
                 )
             """))
 
-            # indeks vector (cosine)
+            conn.execute(text(f"""
+                CREATE TABLE IF NOT EXISTS {name}_location (
+                    id TEXT PRIMARY KEY,
+                    location TEXT,
+                    thing_id TEXT,
+                    CONSTRAINT fk_{name}_location
+                    FOREIGN KEY (thing_id)
+                    REFERENCES {name}(id)
+                    ON DELETE CASCADE
+                )
+            """))
+
+            conn.execute(text(f"""
+                CREATE INDEX IF NOT EXISTS idx_{name}_location_location
+                ON {name}_location(location)
+            """))
+           
+             # indeks vector (cosine)
             conn.execute(text(f"""
                 CREATE INDEX IF NOT EXISTS {name}_embedding_idx
                 ON {name}
@@ -49,6 +67,18 @@ class PGVectorCollection:
                     "embedding": e,
                     "metadata": json.dumps(m)
                 })
+                location = m.get('location', 'unknown')
+                location_id = str(uuid.uuid4())
+                conn.execute(text(f"""
+                    INSERT INTO {self.name}_location (id, location, thing_id)
+                    VALUES (:location_id, :location, :thing_id)
+                    ON CONFLICT (id) DO UPDATE
+                    SET location = EXCLUDED.location
+                """), {
+                    "location_id": location_id,
+                    "location": location,
+                    "thing_id": i
+                })
             conn.commit()
 
     def update_metadata(self, ids, metadatas):
@@ -63,7 +93,20 @@ class PGVectorCollection:
                     "metadata": json.dumps(m)
                 })
             conn.commit()
-            
+
+    def update_location(self, ids, locations):
+        with self.engine.connect() as conn:
+            for i, loc in zip(ids, locations):
+                conn.execute(text(f"""
+                    UPDATE {self.name}_location
+                    SET location = :location
+                    WHERE thing_id = :thing_id
+                """), {
+                    "thing_id": i,
+                    "location": loc
+                })
+            conn.commit()
+
     def count(self):
         with self.engine.connect() as conn:
             return conn.execute(
@@ -90,6 +133,23 @@ class PGVectorCollection:
             "distances": [[float(r[2]) for r in result]],
         }
 
+    def query_loc(self, location):
+        with self.engine.connect() as conn:
+            result = conn.execute(text(f"""
+                SELECT t.id, t.metadata, l.location
+                FROM {self.name} t
+                JOIN {self.name}_location l ON t.id = l.thing_id
+                WHERE l.location = :location
+            """), {
+                "location": location
+            }).fetchall()
+
+        return {
+            "ids": [[r[0] for r in result]],
+            "metadatas": [[r[1] for r in result]],
+            "locations": [[r[2] for r in result]],
+        }
+
     def get(self, include=None):
         with self.engine.connect() as conn:
             result = conn.execute(text(f"""
@@ -103,7 +163,7 @@ class PGVectorCollection:
 
     def clear(self):
         with self.engine.connect() as conn:
-            conn.execute(text(f"TRUNCATE TABLE {self.name}"))
+            conn.execute(text(f"TRUNCATE TABLE {self.name} CASCADE"))
             conn.commit()
 
 class VocabularyCollection:

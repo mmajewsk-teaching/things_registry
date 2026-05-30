@@ -25,6 +25,23 @@ def query_crop(crop: Crop, things, top_k: int = 5) -> list[dict]:
             'metadata': res['metadatas'][0][i],
         })
     return out
+def respond_to_query_location(location: str, things) -> dict:
+    """Query the vector DB for entries at a given location.
+    Returns dict with 'message' and 'matches' (list of dicts with id, metadata, location)."""
+    res = things.query_loc(location=location)
+    print(f"Querying location '{location}' in DB, got {res} results.")
+    matches = []
+    for i in range(len(res['ids'][0])):
+        matches.append({
+            'id': res['ids'][0][i],
+            'metadata': res['metadatas'][0][i],
+            'location': res['locations'][0][i],
+        })
+    message = f'Found {len(matches)} things at location "{location}".'
+    return {
+        'message': message,
+        'matches': matches,
+    }
 
 def respond_to_query(crop: Crop, things,top_k: int = 5) -> dict:
     matches = query_crop(crop, things,top_k=top_k)

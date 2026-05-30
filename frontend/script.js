@@ -29,7 +29,7 @@ function hideSpinner() {
     spinnerWrap.classList.add("hidden");
 }
 
-function renderResult(data, uploadedFile) {
+function renderResult(data, uploadedFile, endpoint) {
     output.textContent = JSON.stringify(data, null, 2);
 
     const hasMatches = data.matches && data.matches.length > 0;
@@ -40,6 +40,7 @@ function renderResult(data, uploadedFile) {
             queryImg.style.display = "block";
         } else {
             queryImg.style.display = "none";
+            document.getElementById("query-image-block").classList.add("hidden");
         }
 
         matchesGrid.innerHTML = "";
@@ -50,6 +51,17 @@ function renderResult(data, uploadedFile) {
 
             const card = document.createElement("div");
             card.className = "match-card";
+            if (endpoint.includes("getperlocation")) {
+                card.innerHTML = `
+                ${sourcePath
+                    ? `<img src="${API_BASE}/static/${sourcePath}" alt="match ${i + 1}" loading="lazy">`
+                    : `<div style="height:140px;display:flex;align-items:center;justify-content:center;color:#475569">no image</div>`
+                }
+                <div class="match-info">
+                    <div class="match-location">📍 ${location}</div>
+                </div>
+            `;
+            }else{
             card.innerHTML = `
                 ${sourcePath
                     ? `<img src="${API_BASE}/static/${sourcePath}" alt="match ${i + 1}" loading="lazy">`
@@ -60,6 +72,7 @@ function renderResult(data, uploadedFile) {
                     <div class="match-location">📍 ${location}</div>
                 </div>
             `;
+            }
             matchesGrid.appendChild(card);
         });
 
@@ -73,7 +86,6 @@ function renderResult(data, uploadedFile) {
 
 document.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const form     = e.target;
     const endpoint = API_BASE + form.dataset.endpoint;
     const method   = form.dataset.method || "GET";
@@ -105,7 +117,7 @@ document.addEventListener("submit", async (e) => {
         catch { data = { status: res.status, raw: text }; }
 
         hideSpinner();
-        renderResult(data, uploadedFile);
+        renderResult(data, uploadedFile, endpoint);
 
     } catch (err) {
         hideSpinner();

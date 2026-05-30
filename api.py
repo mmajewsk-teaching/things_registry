@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from db.postgres import PGVectorCollection
 from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
-from pipelines.retrieval_pipeline import respond_to_query
+from pipelines.retrieval_pipeline import respond_to_query,respond_to_query_location
 from services.crop_service import register_crop
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +24,8 @@ class ChangeLoc(BaseModel):
 class QueryRequest(BaseModel):
     path: str
 
+class LocationRequest(BaseModel):
+    location: str
 #[Previous Instruction]
 ### run database container
     ### docker run -d \
@@ -149,6 +151,15 @@ async def query_from_path(request: Request, file: UploadFile = File(...)):
     finally:
         tmp_path.unlink(missing_ok=True)
 
+@app.post("/query/getperlocation")
+async def query_per_location(request: Request, location: LocationRequest):
+    print(f"Received query for location: {location.location}")
+    things = request.app.state.things
+    things_in_location = respond_to_query_location(location.location, things)
+    print(f"Queried location '{location.location}', found {len(things_in_location)} things.")
+    return things_in_location
+
+    
 
 #EXAMPLE CALL:
 #curl -X POST http://localhost:8000/query/changeloc -H 
@@ -175,6 +186,7 @@ async def query_change_loc(request: Request, file: UploadFile = File(...), locat
             top_id = initial_res['matches'][0]['id']
             original_metadata['location'] = location
             things.update_metadata(ids=[top_id], metadatas=[original_metadata])
+            things.update_location(ids=[top_id], locations=[location])
             updated = True
 
         # Second pass: refresh results after possible metadata update
