@@ -13,7 +13,7 @@ def query_crop(crop: Crop, things, top_k: int = 5) -> list[dict]:
     res = things.query(
         query_embeddings=[crop.emb_dino.tolist()],
         n_results=min(top_k, things.count()),
-        include=['metadatas', 'distances'],
+        # include=['metadatas', 'distances'],
     )
     out = []
     for i in range(len(res['ids'][0])):

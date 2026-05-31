@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile, shutil
 from datetime import datetime
 from sqlalchemy import create_engine
-from db.postgres import PGVectorCollection
+from db.postgres_sqlalchemy import PGVectorCollection
 from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
 from pipelines.retrieval_pipeline import respond_to_query,respond_to_query_location
