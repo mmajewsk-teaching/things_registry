@@ -9,7 +9,7 @@ class PGVectorCollection:
         self.engine = engine
         self.name = name
         self.dim = dim
-
+        self.initialized = False
         self.metadata = MetaData()
         self.Session = sessionmaker(bind=engine)
 
@@ -34,7 +34,6 @@ class PGVectorCollection:
         with engine.begin() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             self.metadata.create_all(conn)
-
     def add(self, ids, embeddings, metadatas):
         with self.Session() as session:
             for i, e, m in zip(ids, embeddings, metadatas):

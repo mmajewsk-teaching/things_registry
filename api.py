@@ -14,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 # import numpy as np
 #this value is to change is only for testing purposes, to see the effect of metadata update on retrieval results
 SAME_OBJECT_THRESHOLD = 0.70
-
 #class for receiving change location requests
 class ChangeLoc(BaseModel):
     path: str
@@ -79,6 +78,7 @@ def get_things_count(request: Request):
 def clear_things(request: Request):
     things = request.app.state.things
     things.clear()
+    things.initialized = False
     return {
         "status": "ok",
         "message": "things collection cleared"
@@ -96,8 +96,6 @@ def clear_things(request: Request):
 @app.post("/add/path")
 async def add_thing(request: Request, file: UploadFile = File(...), location: str = Form(...)):
     things = request.app.state.things
-
-    # Create uploads directory if it doesn't exist
     uploads_dir = Path("./uploads")
     uploads_dir.mkdir(exist_ok=True)
 
@@ -116,14 +114,15 @@ async def add_thing(request: Request, file: UploadFile = File(...), location: st
         qcrop = crops[0]
 
         # First pass: find best match to decide whether to update metadata
-        initial_res = respond_to_query(qcrop, things, top_k=5)
-        top_score = initial_res['matches'][0]['similarity']
-       
-        if top_score >= SAME_OBJECT_THRESHOLD:
-            return {
-            "status": "ok",
-            "message": "Object already exists with similar location. Do not add duplicate."
-            }
+        if things.count() > 0:  # Only query if there are already things in the registry
+            initial_res = respond_to_query(qcrop, things, top_k=5)
+            top_score = initial_res['matches'][0]['similarity']
+        
+            if top_score >= SAME_OBJECT_THRESHOLD:
+                return {
+                "status": "ok",
+                "message": "Object already exists with similar location. Do not add duplicate."
+                }
         for c in crops:
             register_crop(c, location=location, things=things)
 
@@ -153,10 +152,8 @@ async def query_from_path(request: Request, file: UploadFile = File(...)):
 
 @app.post("/query/getperlocation")
 async def query_per_location(request: Request, location: LocationRequest):
-    print(f"Received query for location: {location.location}")
     things = request.app.state.things
     things_in_location = respond_to_query_location(location.location, things)
-    print(f"Queried location '{location.location}', found {len(things_in_location)} things.")
     return things_in_location
 
     

@@ -29,7 +29,6 @@ def respond_to_query_location(location: str, things) -> dict:
     """Query the vector DB for entries at a given location.
     Returns dict with 'message' and 'matches' (list of dicts with id, metadata, location)."""
     res = things.query_loc(location=location)
-    print(f"Querying location '{location}' in DB, got {res} results.")
     matches = []
     for i in range(len(res['ids'][0])):
         matches.append({
