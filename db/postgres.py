@@ -1,265 +1,149 @@
+from sqlalchemy import ( Text, String, Index, ForeignKey,select,text)
+from sqlalchemy.dialects.postgresql import JSONB
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.orm import sessionmaker,DeclarativeBase,Mapped,mapped_column,relationship
+import uuid
 
-# import json
-# from sqlalchemy import text
-# import uuid
+class Base(DeclarativeBase):
+    pass
 
-# DATABASE_URL = "postgresql://postgres:haslo@localhost:5432/testdb"
+class Thing(Base):
+    __tablename__ = "things2"
 
-# class PGVectorCollection:
-#     def __init__(self, engine, name, dim=384):
-#         self.engine = engine
-#         self.name = name
-#         self.dim = dim
-#
-#         with engine.connect() as conn:
-#             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-#             conn.execute(text(f"""
-#                 CREATE TABLE IF NOT EXISTS {name} (
-#                     id TEXT PRIMARY KEY,
-#                     embedding vector({dim}),
-#                     metadata JSONB
-#                 )
-#             """))
-#
-#             conn.execute(text(f"""
-#                 CREATE TABLE IF NOT EXISTS {name}_location (
-#                     id TEXT PRIMARY KEY,
-#                     location TEXT,
-#                     thing_id TEXT,
-#                     CONSTRAINT fk_{name}_location
-#                     FOREIGN KEY (thing_id)
-#                     REFERENCES {name}(id)
-#                     ON DELETE CASCADE
-#                 )
-#             """))
-#
-#             conn.execute(text(f"""
-#                 CREATE INDEX IF NOT EXISTS idx_{name}_location_location
-#                 ON {name}_location(location)
-#             """))
-#
-#              # indeks vector (cosine)
-#             conn.execute(text(f"""
-#                 CREATE INDEX IF NOT EXISTS {name}_embedding_idx
-#                 ON {name}
-#                 USING hnsw (embedding vector_cosine_ops)
-#             """))
-#
-#             # indeks metadata
-#             conn.execute(text(f"""
-#                 CREATE INDEX IF NOT EXISTS {name}_metadata_idx
-#                 ON {name} USING GIN (metadata)
-#             """))
-#
-#             conn.commit()
-#
-#     def add(self, ids, embeddings, metadatas):
-#         with self.engine.connect() as conn:
-#             for i, e, m in zip(ids, embeddings, metadatas):
-#                 conn.execute(text(f"""
-#                     INSERT INTO {self.name} (id, embedding, metadata)
-#                     VALUES (:id, :embedding, :metadata)
-#                     ON CONFLICT (id) DO UPDATE
-#                     SET embedding = EXCLUDED.embedding,
-#                         metadata = EXCLUDED.metadata
-#                 """), {
-#                     "id": i,
-#                     "embedding": e,
-#                     "metadata": json.dumps(m)
-#                 })
-#                 location = m.get('location', 'unknown')
-#                 location_id = str(uuid.uuid4())
-#                 conn.execute(text(f"""
-#                     INSERT INTO {self.name}_location (id, location, thing_id)
-#                     VALUES (:location_id, :location, :thing_id)
-#                     ON CONFLICT (id) DO UPDATE
-#                     SET location = EXCLUDED.location
-#                 """), {
-#                     "location_id": location_id,
-#                     "location": location,
-#                     "thing_id": i
-#                 })
-#             conn.commit()
-#
-#     def update_metadata(self, ids, metadatas):
-#         with self.engine.connect() as conn:
-#             for i, m in zip(ids, metadatas):
-#                 conn.execute(text(f"""
-#                     UPDATE {self.name}
-#                     SET metadata = :metadata
-#                     WHERE id = :id
-#                 """), {
-#                     "id": i,
-#                     "metadata": json.dumps(m)
-#                 })
-#             conn.commit()
-#
-#     def update_location(self, ids, locations):
-#         with self.engine.connect() as conn:
-#             for i, loc in zip(ids, locations):
-#                 conn.execute(text(f"""
-#                     UPDATE {self.name}_location
-#                     SET location = :location
-#                     WHERE thing_id = :thing_id
-#                 """), {
-#                     "thing_id": i,
-#                     "location": loc
-#                 })
-#             conn.commit()
-#
-#     def count(self):
-#         with self.engine.connect() as conn:
-#             return conn.execute(
-#                 text(f"SELECT COUNT(*) FROM {self.name}")
-#             ).scalar()
-#
-#     def query(self, query_embeddings, n_results=5, include=None):
-#         query_vec = query_embeddings[0]
-#
-#         with self.engine.connect() as conn:
-#             result = conn.execute(text(f"""
-#                 SELECT id, metadata, embedding <=> :query AS distance
-#                 FROM {self.name}
-#                 ORDER BY embedding <=> :query
-#                 LIMIT :k
-#             """), {
-#                 "query": str(query_vec),
-#                 "k": n_results
-#             }).fetchall()
-#
-#         return {
-#             "ids": [[r[0] for r in result]],
-#             "metadatas": [[r[1] for r in result]],
-#             "distances": [[float(r[2]) for r in result]],
-#         }
-#
-#     def query_loc(self, location):
-#         with self.engine.connect() as conn:
-#             result = conn.execute(text(f"""
-#                 SELECT t.id, t.metadata, l.location
-#                 FROM {self.name} t
-#                 JOIN {self.name}_location l ON t.id = l.thing_id
-#                 WHERE l.location = :location
-#             """), {
-#                 "location": location
-#             }).fetchall()
-#
-#         return {
-#             "ids": [[r[0] for r in result]],
-#             "metadatas": [[r[1] for r in result]],
-#             "locations": [[r[2] for r in result]],
-#         }
-#
-#     def get(self, include=None):
-#         with self.engine.connect() as conn:
-#             result = conn.execute(text(f"""
-#                 SELECT id, metadata FROM {self.name}
-#             """)).fetchall()
-#
-#         return {
-#             "ids": [r[0] for r in result],
-#             "metadatas": [r[1] for r in result],
-#         }
-#
-#     def clear(self):
-#         with self.engine.connect() as conn:
-#             conn.execute(text(f"TRUNCATE TABLE {self.name} CASCADE"))
-#             conn.commit()
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    embedding: Mapped[list] = mapped_column(Vector(384))
+    metadata_: Mapped[dict] = mapped_column(JSONB)
 
+    locations: Mapped[list["ThingLocation"]] = relationship(
+        back_populates="thing",
+        cascade="all, delete-orphan",
+    )
 
+    __table_args__ = (
+        Index(
+            "things2_embedding_idx",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+        Index(
+            "things2_metadata_idx",
+            "metadata_",
+            postgresql_using="gin",
+        ),
+    )
 
+class ThingLocation(Base):
+    __tablename__ = "things2_location"
 
-# class VocabularyCollection:
-#     def __init__(self, engine, name="vocabulary", dim=512):
-#         self.engine = engine
-#         self.name = name
-#         self.dim = dim
-#
-#         with engine.connect() as conn:
-#             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-#
-#             conn.execute(text(f"""
-#                 CREATE TABLE IF NOT EXISTS {name} (
-#                     label TEXT PRIMARY KEY,
-#                     embedding vector({dim})
-#                 )
-#             """))
-#
-#             conn.execute(text(f"""
-#                 CREATE INDEX IF NOT EXISTS {name}_embedding_idx
-#                 ON {name}
-#                 USING hnsw (embedding vector_cosine_ops)
-#             """))
-#
-#             conn.commit()
-#
-#     def add(self, label, embedding):
-#         with self.engine.connect() as conn:
-#             conn.execute(text(f"""
-#                    INSERT INTO {self.name} (label, embedding)
-#                    VALUES (:label, :embedding)
-#                    ON CONFLICT (label) DO UPDATE
-#                    SET embedding = EXCLUDED.embedding
-#                """), {
-#                 "label": label,
-#                 "embedding": embedding.tolist()
-#             })
-#
-#             conn.commit()
-#
-#     def add_many(self, labels, embeddings):
-#         with self.engine.connect() as conn:
-#             for label, emb in zip(labels, embeddings):
-#                 conn.execute(text(f"""
-#                     INSERT INTO {self.name} (label, embedding)
-#                     VALUES (:label, :embedding)
-#                     ON CONFLICT (label) DO UPDATE
-#                     SET embedding = EXCLUDED.embedding
-#                 """), {
-#                     "label": label,
-#                     "embedding": emb.tolist()
-#                 })
-#
-#             conn.commit()
-#
-#     def get_all(self):
-#         with self.engine.connect() as conn:
-#             result = conn.execute(text(f"""
-#                    SELECT label, embedding
-#                    FROM {self.name}
-#                """)).fetchall()
-#
-#         return result
-#
-#     def count(self):
-#         with self.engine.connect() as conn:
-#             return conn.execute(
-#                 text(f"SELECT COUNT(*) FROM {self.name}")
-#             ).scalar()
-#
-#     def clear(self):
-#         with self.engine.connect() as conn:
-#             conn.execute(text(f"TRUNCATE TABLE {self.name}"))
-#             conn.commit()
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    location: Mapped[str] = mapped_column(String)
 
+    thing_id: Mapped[str] = mapped_column(
+        ForeignKey("things2.id", ondelete="CASCADE")
+    )
 
-# def create_things():
-#     return PGVectorCollection(engine, name="things2", dim=1024)
-#
-# def create_vocab():
-#         return VocabularyCollection(engine, name="vocabulary", dim=512)
+    thing: Mapped[Thing] = relationship(back_populates="locations")
 
-# def create_engine():
-#     return sa_create_engine(
-#         DATABASE_URL,
-#         pool_pre_ping=True,
-#         pool_size=5,
-#         max_overflow=10,
-#     )
-#
-# def create_things(engine):
-#     return PGVectorCollection(
-#         engine=engine,
-#         name="things2",
-#         dim=1024
-#     )
+class PGVectorCollection:
+    def __init__(self, engine):
+        self.engine = engine
+        self.Session = sessionmaker(bind=engine)
+
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+        Base.metadata.create_all(engine)
+
+    def add(self, ids, embeddings, metadatas):
+        with self.Session() as session:
+            for i, e, m in zip(ids, embeddings, metadatas):
+                thing = session.get(Thing, i)
+
+                if thing is None:
+                    thing = Thing(id=i,embedding=e,metadata_=m)
+                    session.add(thing)
+                else:
+                    thing.embedding = e
+                    thing.metadata_ = m
+
+                location = m.get("location", "unknown")
+
+                existing_location = (session.query(ThingLocation).filter(ThingLocation.thing_id == i).first())
+
+                if existing_location:
+                    existing_location.location = location
+                else:
+                    session.add( ThingLocation(id=str(uuid.uuid4()),location=location,thing_id=i))
+
+            session.commit()
+    def count(self):
+        with self.Session() as session:
+            return session.query(Thing).count()
+
+    def get(self):
+        with self.Session() as session:
+            things = session.scalars(select(Thing)).all()
+            return {
+                "ids": [t.id for t in things],
+                "metadatas": [t.metadata_ for t in things],
+            }
+
+    def update_metadata(self, ids, metadatas):
+        with self.Session() as session:
+            for i, m in zip(ids, metadatas):
+                thing = session.get(Thing, i)
+                if thing:
+                    thing.metadata_ = m
+            session.commit()
+
+    def update_location(self, ids, locations):
+        with self.Session() as session:
+
+            for i, loc in zip(ids, locations):
+
+                location = (
+                    session.query(ThingLocation)
+                    .filter(ThingLocation.thing_id == i)
+                    .first()
+                )
+
+                if location:
+                    location.location = loc
+
+            session.commit()
+
+    def query_loc(self, location):
+        with self.Session() as session:
+            result = (session.query(Thing.id,Thing.metadata_,ThingLocation.location)
+                .join(ThingLocation)
+                .filter(ThingLocation.location == location)
+                .all()
+            )
+
+            return {
+                "ids": [[r.id for r in result]],
+                "metadatas": [[r.metadata_ for r in result]],
+                "locations": [[r.location for r in result]],
+            }
+
+    def query(self, query_embeddings, n_results=5):
+        query_vec = query_embeddings[0]
+
+        with self.Session() as session:
+            distance = Thing.embedding.cosine_distance(query_vec)
+            result = (
+                session.query( Thing.id, Thing.metadata_, distance.label("distance"))
+                .order_by(distance)
+                .limit(n_results)
+                .all()
+            )
+
+            return {
+                "ids": [[r.id for r in result]],
+                "metadatas": [[r.metadata_ for r in result]],
+                "distances": [[float(r.distance) for r in result]],
+            }
+    def clear(self):
+        with self.engine.begin() as conn:
+            conn.execute( text("TRUNCATE TABLE things2 CASCADE") )

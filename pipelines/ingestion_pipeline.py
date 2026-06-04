@@ -34,12 +34,6 @@ def draw_detections(img: Image.Image, crops):
 def run_ingestion_pipeline(things, plotResults=False) -> dict:
     t_start = time.time()
 
-    if things.initialized:
-        return {
-            "status": "ok",
-            "message": "Things registry already initialized. No action taken.",
-        }
-
     image_paths = sorted(
         p for p in Path(PHOTOS_FOLDER).iterdir()
         if p.suffix.lower() in {'.jpg', '.jpeg', '.png'}
@@ -59,7 +53,7 @@ def run_ingestion_pipeline(things, plotResults=False) -> dict:
             total_crops += 1
 
     elapsed = round(time.time() - t_start, 1)
-    things.initialized = True
+    # things.initialized = True
     return {
         "photos_scanned": len(image_paths),
         "objects_registered": total_crops,

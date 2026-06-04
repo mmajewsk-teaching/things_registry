@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile, shutil
 from datetime import datetime
 from sqlalchemy import create_engine
-from db.postgres_sqlalchemy import PGVectorCollection
+from db.postgres import PGVectorCollection
 from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
 from pipelines.retrieval_pipeline import respond_to_query,respond_to_query_location
@@ -63,7 +63,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     app.state.engine = create_engine("postgresql://postgres:haslo@localhost:5432/testdb")
-    app.state.things = PGVectorCollection(engine=app.state.engine,name="things2",dim=384)
+    app.state.things = PGVectorCollection(engine=app.state.engine)
 
 
 @app.get("/things/count")
@@ -71,14 +71,14 @@ def get_things_count(request: Request):
     things = request.app.state.things
     return {
         "count": int(things.count()),
-        "collection": things.name
+        # "collection": things.name
     }
 
 @app.post("/things/clear")
 def clear_things(request: Request):
     things = request.app.state.things
     things.clear()
-    things.initialized = False
+    # things.initialized = False
     return {
         "status": "ok",
         "message": "things collection cleared"
@@ -100,7 +100,7 @@ async def add_thing(request: Request, file: UploadFile = File(...), location: st
     uploads_dir.mkdir(exist_ok=True)
 
     # Generate permanent file path
-    suffix = Path(file.filename).suffix or ".png"
+    # suffix = Path(file.filename).suffix or ".png"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{file.filename}"
     file_path = uploads_dir / filename
@@ -199,6 +199,12 @@ async def query_change_loc(request: Request, file: UploadFile = File(...), locat
 @app.post("/things/initialize")
 def initialize_things(request: Request):
     things = request.app.state.things
+
+    if things.count() > 0:
+        return {
+            "status": "ok",
+            "message": "Things registry already initialized. No action taken.",
+        }
 
     result = run_ingestion_pipeline(things=things)
 
