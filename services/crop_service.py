@@ -5,7 +5,7 @@ from pathlib import Path
 from models.crop import Crop
 
 
-def register_crop(crop: Crop, location: str, things, custom_label: str = None) -> str:
+def register_crop(crop: Crop, location: str, things, custom_label: str | None = None) -> str:
     """Add a crop to the vector DB. Returns the assigned ID.
     ID is deterministic (source_path + crop_idx) so re-running ingestion
     updates existing rows instead of creating duplicates."""

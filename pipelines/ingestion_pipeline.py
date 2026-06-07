@@ -29,7 +29,7 @@ def draw_detections(img: Image.Image, crops):
     for c in crops:
         x1, y1, x2, y2 = c.bbox
         color = 'yellow' if c.detector_label == 'whole_image_fallback' else 'red'
-        draw.rectangle([x1, y1, x2, y2], outline=color, width=3)
+        draw.rectangle((x1, y1, x2, y2), outline=color, width=3)
     return out
 
 

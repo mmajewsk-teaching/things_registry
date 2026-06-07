@@ -154,7 +154,7 @@ class PGVectorCollection:
     def count(self) -> int:
         """Return the total number of registered things."""
         with self.Session() as session:
-            return session.scalar(select(func.count()).select_from(Thing))
+            return session.scalar(select(func.count()).select_from(Thing)) or 0
 
     def get(self) -> dict[str, list]:
         """Return all things as parallel id and metadata lists."""
