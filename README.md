@@ -18,6 +18,9 @@ pip install -r requirements.txt
 # 2. Enable pre-commit hooks (runs ruff before every commit)
 pre-commit install
 
+# To run checks manually on all files:
+pre-commit run --all-files
+
 # 3. Configure the database URL
 cp .env.example .env
 # Edit .env if your credentials differ from the defaults
