@@ -1,69 +1,51 @@
-from fastapi import Request, FastAPI, UploadFile, File, Form
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-import tempfile, shutil
+from contextlib import asynccontextmanager
+import shutil
+import tempfile
 from datetime import datetime
+from pathlib import Path
+
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sqlalchemy import create_engine
+
+import config
 from db.postgres import PGVectorCollection
 from pipelines.detection_pipeline import process_image
 from pipelines.ingestion_pipeline import run_ingestion_pipeline
-from pipelines.retrieval_pipeline import respond_to_query,respond_to_query_location
+from pipelines.retrieval_pipeline import respond_to_query, respond_to_query_location
 from services.crop_service import register_crop
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-# import numpy as np
-#this value is to change is only for testing purposes, to see the effect of metadata update on retrieval results
-SAME_OBJECT_THRESHOLD = 0.70
-#class for receiving change location requests
-class ChangeLoc(BaseModel):
-    path: str
-    location: str
 
-#Class for receiving query requests
-class QueryRequest(BaseModel):
-    path: str
+# Similarity threshold: detections above this score are treated as the same
+# physical object. Kept intentionally low for testing - bump toward 0.90 in
+# production to avoid false-positive deduplication.
+SAME_OBJECT_THRESHOLD = 0.70
+
 
 class LocationRequest(BaseModel):
     location: str
-#[Previous Instruction]
-### run database container
-    ### docker run -d \
-    #   --name pgvector \
-    #   -e POSTGRES_USER=myuser \
-    #   -e POSTGRES_PASSWORD=mypass \
-    #   -e POSTGRES_DB=mydb \
-    #   -p 5432:5432 \
-    #   pgvector/pgvector:pg16
-    #### conda to run project 
-    #### source ~/miniconda3/bin/activate
-    #### conda create -n ai python=3.10
-    #### pip install -r requirements.txt
-    #### python3 main.py
-#[End Previous instruction]
 
-#[New Instruction]
-    #Step0: [OPTIONAL] run conda
-    #Step1: pip install -r requirements.txt
-    #Step2: docker run --name pgvector -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=haslo -e POSTGRES_DB=testdb -p 5432:5432 pgvector/pgvector:pg16
-    #Step3: uvicorn api:app --reload
-    #Step4: run index.html
 
-#[End New Instruction]
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Create the DB engine and vector collection on startup; dispose on shutdown."""
+    engine = create_engine(config.DATABASE_URL)
+    app.state.engine = engine
+    app.state.things = PGVectorCollection(engine=engine)
+    yield
+    engine.dispose()
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="."), name="static")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5500","http://127.0.0.1:5500"],
+    allow_origins=["http://localhost:5500", "http://127.0.0.1:5500"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def startup():
-    app.state.engine = create_engine("postgresql://postgres:haslo@localhost:5432/testdb")
-    app.state.things = PGVectorCollection(engine=app.state.engine)
 
 
 @app.get("/things/count")
