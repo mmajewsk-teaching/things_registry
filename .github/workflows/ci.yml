@@ -20,8 +20,8 @@ jobs:
         # ruff doesn't execute code; mypy uses ignore_missing_imports for torch/transformers
         run: pip install ruff mypy sqlalchemy[mypy] types-Pillow
 
-      - name: Lint — ruff
+      - name: Lint - ruff
         run: ruff check .
 
-      - name: Type check — mypy
+      - name: Type check - mypy
         run: mypy db/ api.py config.py services/
