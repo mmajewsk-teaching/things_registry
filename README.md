@@ -29,8 +29,15 @@ docker start pgvector
 # 3. Start the backend
 uvicorn api:app --reload
 
-# 4. Serve the frontend on port 5500 (required - CORS is locked to this port)
-cd frontend && python -m http.server 5500
+# 4. In a second terminal, serve the frontend on port 5500
+# (required: CORS is configured to allow requests only from this port)
+
+cd frontend
+
+# Use whichever command is available on your system:
+python -m http.server 5500
+# or
+python3 -m http.server 5500
 ```
 
 Open **http://localhost:5500** in your browser.
