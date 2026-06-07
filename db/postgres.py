@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
 import uuid
+from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, Index, String, Text, func, select, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
@@ -12,7 +13,6 @@ from sqlalchemy.orm import (
     relationship,
     sessionmaker,
 )
-from pgvector.sqlalchemy import Vector
 
 
 class Base(DeclarativeBase):

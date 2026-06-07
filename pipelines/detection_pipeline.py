@@ -1,8 +1,10 @@
-from models.crop import Crop
 from pathlib import Path
+
 from PIL import Image
-from models.grounding_dino import detect_with_dino
+
+from models.crop import Crop
 from models.dinov2 import embed_dino
+from models.grounding_dino import detect_with_dino
 
 FALLBACK_TO_WHOLE_IMAGE = True
 

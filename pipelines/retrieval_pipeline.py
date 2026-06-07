@@ -1,5 +1,6 @@
-from models.crop import Crop
 from collections import Counter
+
+from models.crop import Crop
 
 SAME_OBJECT_THRESHOLD = 0.90      # >= this: same specimen
 SAME_CATEGORY_THRESHOLD = 0.70    # >= this but < SAME_OBJECT: same category, different specimen

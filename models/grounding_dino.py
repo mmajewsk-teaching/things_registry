@@ -1,8 +1,9 @@
-from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
-from config import DEVICE
-from PIL import Image
 import torch
 import torchvision.ops as tv_ops
+from PIL import Image
+from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
+
+from config import DEVICE
 
 # Detector settings (GroundingDINO)
 DETECTION_PROMPT = 'a tool. an object.'

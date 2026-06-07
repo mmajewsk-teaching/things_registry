@@ -1,8 +1,9 @@
-from torchvision import transforms
-from config import DINOV2_VARIANT, DEVICE
+import numpy as np
 import torch
 from PIL import Image
-import numpy as np
+from torchvision import transforms
+
+from config import DEVICE, DINOV2_VARIANT
 
 # DINOv2 ViT-S/14 (21 M params, 384-dim) - downgraded from ViT-L/14 (307 M,
 # 1024-dim). Embedding dimension is now 384

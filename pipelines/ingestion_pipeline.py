@@ -1,8 +1,10 @@
-from PIL import Image, ImageDraw
+import time
 from pathlib import Path
+
+from PIL import Image, ImageDraw
+
 from pipelines.detection_pipeline import process_image
 from services.crop_service import register_crop
-import time
 
 PHOTOS_FOLDER = './DLWC_AA/things_photos'
 

@@ -1,7 +1,9 @@
-from models.crop import Crop
-from pathlib import Path
 import hashlib
 from datetime import datetime, timezone
+from pathlib import Path
+
+from models.crop import Crop
+
 
 def register_crop(crop: Crop, location: str, things, custom_label: str = None) -> str:
     """Add a crop to the vector DB. Returns the assigned ID.

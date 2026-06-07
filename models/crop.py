@@ -1,7 +1,9 @@
+from dataclasses import dataclass
+from pathlib import Path
+
 import numpy as np
 from PIL import Image
-from pathlib import Path
-from dataclasses import dataclass
+
 
 @dataclass
 class Crop:
