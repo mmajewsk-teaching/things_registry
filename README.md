@@ -15,7 +15,11 @@ conda activate ai
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Start PostgreSQL with pgvector
+# 2. Configure the database URL
+cp .env.example .env
+# Edit .env if your credentials differ from the defaults
+
+# 3. Start PostgreSQL with pgvector
 docker run --name pgvector \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=haslo \
@@ -26,12 +30,11 @@ docker run --name pgvector \
 # If the container already exists (stopped):
 docker start pgvector
 
-# 3. Start the backend
+# 4. Start the backend
 uvicorn api:app --reload
 
-# 4. In a second terminal, serve the frontend on port 5500
+# 5. In a second terminal, serve the frontend on port 5500
 # (required: CORS is configured to allow requests only from this port)
-
 cd frontend
 
 # Use whichever command is available on your system:
@@ -39,6 +42,9 @@ python -m http.server 5500
 # or
 python3 -m http.server 5500
 ```
+
+> **Database URL:** set `DATABASE_URL` in `.env` to point to your PostgreSQL instance.
+> The `.env` file is loaded automatically on startup and is excluded from git.
 
 Open **http://localhost:5500** in your browser.
 

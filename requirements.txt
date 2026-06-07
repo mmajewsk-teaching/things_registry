@@ -4,7 +4,10 @@ Pillow
 numpy
 matplotlib
 transformers==4.45.2
+fastapi
+uvicorn[standard]
 sqlalchemy
-IPython
 psycopg2-binary
 pgvector
+python-dotenv
+IPython
