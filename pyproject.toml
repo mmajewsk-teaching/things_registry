@@ -1,0 +1,17 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+# main.py is a scratch/notebook file — not production code
+exclude = ["main.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = [
+    "E501",  # line length — enforced by line-length setting, not as an error
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+exclude = ["main\\.py"]

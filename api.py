@@ -113,7 +113,7 @@ async def add_thing(request: Request, file: UploadFile = File(...), location: st
             "message": "Object added successfully.",
             "file_path": str(file_path)
             }
-    except Exception as e:
+    except Exception:
         file_path.unlink(missing_ok=True)
         raise
 
