@@ -20,7 +20,7 @@ class Base(DeclarativeBase):
 
 
 class Thing(Base):
-    __tablename__ = "things2"
+    __tablename__ = "things"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     embedding: Mapped[list[float]] = mapped_column(Vector(384))
@@ -33,13 +33,13 @@ class Thing(Base):
 
     __table_args__ = (
         Index(
-            "things2_embedding_idx",
+            "things_embedding_idx",
             "embedding",
             postgresql_using="hnsw",
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
         Index(
-            "things2_metadata_idx",
+            "things_metadata_idx",
             "metadata",
             postgresql_using="gin",
         ),
@@ -50,11 +50,11 @@ class Thing(Base):
 
 
 class ThingLocation(Base):
-    __tablename__ = "things2_location"
+    __tablename__ = "things_location"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     location: Mapped[str] = mapped_column(String)
-    thing_id: Mapped[str] = mapped_column(ForeignKey("things2.id", ondelete="CASCADE"))
+    thing_id: Mapped[str] = mapped_column(ForeignKey("things.id", ondelete="CASCADE"))
 
     thing: Mapped[Thing] = relationship(back_populates="locations")
 
@@ -147,7 +147,7 @@ class PGVectorCollection:
     def clear(self) -> None:
         """Truncate all rows from the things table (cascades to locations)."""
         with self.engine.begin() as conn:
-            conn.execute(text("TRUNCATE TABLE things2 CASCADE"))
+            conn.execute(text("TRUNCATE TABLE things CASCADE"))
 
     # Read operations ========================================================
 
