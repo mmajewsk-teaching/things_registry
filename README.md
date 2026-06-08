@@ -67,6 +67,8 @@ Open **http://localhost:5500** in your browser.
 | **Clear Things** | Deletes all embeddings from the DB |
 | **Query Path** | Upload an image → finds the top 5 visually similar objects and their locations |
 | **Change Location** | Upload an image + type a new location → updates the location of the best matching object |
+| **Query by location** | List all things from database with given location
+| **Add path** | - Upload image and write actual location → thing will be added to database with given location
 
 Results are shown as image cards (with similarity % and location) plus raw JSON below.
 
