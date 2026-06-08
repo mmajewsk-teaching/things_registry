@@ -15,8 +15,9 @@ conda activate ai
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Enable pre-commit hooks (runs ruff before every commit)
+# 2. Enable pre-commit hooks (runs ruff before every commit and every push)
 pre-commit install
+pre-commit install --hook-type pre-push
 
 # To run checks manually on all files:
 pre-commit run --all-files
