@@ -24,7 +24,7 @@ class Thing(Base):
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     embedding: Mapped[list[float]] = mapped_column(Vector(384))
-    metadata_: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB)
 
     locations: Mapped[list[ThingLocation]] = relationship(
         back_populates="thing",
@@ -40,7 +40,7 @@ class Thing(Base):
         ),
         Index(
             "things2_metadata_idx",
-            "metadata_",
+            "metadata",
             postgresql_using="gin",
         ),
     )

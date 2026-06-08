@@ -17,7 +17,6 @@ jobs:
           cache: pip
 
       - name: Install dev tools
-        # ruff doesn't execute code; mypy uses ignore_missing_imports for torch/transformers
         run: pip install ruff mypy sqlalchemy[mypy] types-Pillow
 
       - name: Lint - ruff

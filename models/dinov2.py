@@ -7,7 +7,11 @@ from config import DEVICE, DINOV2_VARIANT
 
 # DINOv2 ViT-S/14 (21 M params, 384-dim) - downgraded from ViT-L/14 (307 M,
 # 1024-dim). Embedding dimension is now 384
-_dino_fp32 = torch.hub.load('facebookresearch/dinov2', DINOV2_VARIANT).eval()
+_dino_fp32 = torch.hub.load(
+    str(torch.hub.get_dir()) + '/facebookresearch_dinov2_main',
+    DINOV2_VARIANT,
+    source='local',
+).eval()
 
 if DEVICE.type == 'cpu':
     # Dynamic quantization of the transformer's Linear layers for
