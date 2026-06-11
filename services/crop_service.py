@@ -1,6 +1,5 @@
-import hashlib
+import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
 from models.crop import Crop
 
@@ -9,9 +8,7 @@ def register_crop(crop: Crop, location: str, things, custom_label: str | None = 
     """Add a crop to the vector DB. Returns the assigned ID.
     ID is deterministic (source_path + crop_idx) so re-running ingestion
     updates existing rows instead of creating duplicates."""
-    file_bytes = Path(crop.source_path).read_bytes()
-    crop_id = hashlib.md5(file_bytes + str(crop.crop_idx).encode()).hexdigest()
-
+    crop_id = str(uuid.uuid4())
 
     things.add(
         ids=[crop_id],

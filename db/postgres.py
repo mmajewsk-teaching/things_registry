@@ -4,8 +4,8 @@ import uuid
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ForeignKey, Index, String, Text, func, select, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import ForeignKey, Index, String, func, select, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -22,7 +22,7 @@ class Base(DeclarativeBase):
 class Thing(Base):
     __tablename__ = "things"
 
-    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
     embedding: Mapped[list[float]] = mapped_column(Vector(384))
     metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB)
 
@@ -52,7 +52,7 @@ class Thing(Base):
 class ThingLocation(Base):
     __tablename__ = "things_location"
 
-    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
     location: Mapped[str] = mapped_column(String)
     thing_id: Mapped[str] = mapped_column(ForeignKey("things.id", ondelete="CASCADE"))
 
